@@ -42,9 +42,7 @@ TaskMate is a **modern Flutter-based task management app** featuring:
 
 ```
 .
-├── .github
-│   └── workflows
-│       └── flutter-ci.yml
+
 ├── android/
 ├── ios/
 ├── assets/
@@ -107,6 +105,13 @@ class AppConfig {
 PRs are welcome! Please follow standard Flutter formatting before submitting.
 
 ---
+## ✍️Author
+
+- **Asim Siddiqui**
+- **Contact Information**
+    - Email: asimsiddiqui8181@gmail.com
+    - LinkedIn: [Asim Siddiqui](https://www.linkedin.com/in/asim-siddiqui-a71731229/)
+    - Portfolio: [Asim Sidd](https://asimsidd.vercel.app/)
 
 ## 📄 License
 This project is licensed under the **MIT License**.
