@@ -4,7 +4,7 @@
 
 [![Flutter](https://img.shields.io/badge/Flutter-3.35-blue?logo=flutter&logoColor=white)](https://flutter.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
-[![Issues](https://img.shields.io/github/issues/YOUR_USER/YOUR_REPO.svg)](https://github.com/YOUR_USER/YOUR_REPO/issues)
+[![Issues](https://img.shields.io/github/issues/YOUR_USER/YOUR_REPO.svg)](https://github.com/Asim-Sidd02/TaskMate/issues)
 [![Releases](https://img.shields.io/github/v/release/YOUR_USER/YOUR_REPO)](https://github.com/YOUR_USER/YOUR_REPO/releases)
 
 ---
