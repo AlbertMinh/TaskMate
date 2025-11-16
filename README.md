@@ -2,7 +2,6 @@
 
 ![TaskMate banner](assets/readme-banner.svg)
 
-[![build](https://github.com/YOUR_USER/YOUR_REPO/actions/workflows/flutter-ci.yml/badge.svg)](https://github.com/YOUR_USER/YOUR_REPO/actions/workflows/flutter-ci.yml)
 [![Flutter](https://img.shields.io/badge/Flutter-3.35-blue?logo=flutter&logoColor=white)](https://flutter.dev)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](./LICENSE)
 [![Issues](https://img.shields.io/github/issues/YOUR_USER/YOUR_REPO.svg)](https://github.com/YOUR_USER/YOUR_REPO/issues)
@@ -23,7 +22,7 @@ TaskMate is a **modern Flutter-based task management app** featuring:
 ---
 
 ## 📸 Screenshots
-(Add your real screenshots here)
+<img src="screenshots/1.jpeg" width="260" style="margin:10px;" /> <img src="screenshots/2.jpeg" width="260" style="margin:10px;" /> <img src="screenshots/3.jpeg" width="260" style="margin:10px;" /> <br/> <img src="screenshots/4.jpeg" width="260" style="margin:10px;" /> <img src="screenshots/5.jpeg" width="260" style="margin:10px;" /> <img src="screenshots/6.jpeg" width="260" style="margin:10px;" /> <br/> </div>
 
 ---
 
