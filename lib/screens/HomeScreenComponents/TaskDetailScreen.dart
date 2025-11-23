@@ -1,9 +1,14 @@
+// lib/screens/task_detail_screen.dart
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:sizer/sizer.dart';
-import './../../services/task_service.dart';
 import 'package:intl/intl.dart';
+
+import '../../services/task_service.dart';
+import '../../services/auth_service.dart';
+import '../../widgets/collaborators_list.dart';
+import '../../widgets/share_task_dialog.dart';
 
 class TaskDetailScreen extends StatefulWidget {
   final Map task;
@@ -22,6 +27,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     task = Map<String, dynamic>.from(widget.task);
   }
 
+  String _extractId(Map t) {
+    return (t['_id'] ?? t['id'] ?? t['taskId'] ?? '').toString();
+  }
+
   @override
   Widget build(BuildContext context) {
     final svc = context.read<TaskService>();
@@ -32,10 +41,12 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     DateTime? start;
     DateTime? end;
     try {
-      if (startRaw != null) start = DateTime.parse(startRaw);
-      if (endRaw != null) end = DateTime.parse(endRaw);
+      if (startRaw != null) start = DateTime.parse(startRaw.toString());
+      if (endRaw != null) end = DateTime.parse(endRaw.toString());
     } catch (_) {}
     final status = (task['status'] ?? '').toString().toLowerCase();
+
+    final id = _extractId(task);
 
     return Scaffold(
       backgroundColor: const Color(0xFF0B0B0C),
@@ -44,6 +55,43 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         elevation: 0,
         title: const Text("Task details"),
         actions: [
+          IconButton(
+            icon: const Icon(Icons.share, color: Colors.white),
+            onPressed: id.isEmpty
+                ? null
+                : () async {
+              final res = await showDialog(
+                context: context,
+                builder: (_) => ShareTaskDialog(taskId: id),
+              );
+              if (res == true) {
+                ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Shared')));
+              }
+            },
+          ),
+          IconButton(
+            icon: const Icon(Icons.people, color: Colors.white),
+            onPressed: () {
+              // show collaborators bottom sheet
+              final meId = context.read<AuthService>().me?['id']?.toString() ?? '';
+              final ownerId = (task['userId']?.toString() ?? '');
+              final isOwner = meId.isNotEmpty && ownerId.isNotEmpty && meId == ownerId;
+
+              showModalBottomSheet(
+                context: context,
+                backgroundColor: Colors.transparent,
+                isScrollControlled: true,
+                builder: (_) => Container(
+                  decoration: const BoxDecoration(
+                    color: Color(0xFF0F0F10),
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(16)),
+                  ),
+                  padding: const EdgeInsets.all(12),
+                  child: SafeArea(child: CollaboratorsList(taskId: id, isOwner: isOwner)),
+                ),
+              );
+            },
+          ),
           IconButton(
             icon: const Icon(Icons.edit),
             onPressed: () => _openEditSheet(context, svc, task),
@@ -59,7 +107,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
-
           Container(
             width: double.infinity,
             padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -94,7 +141,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                     style: TextStyle(color: Colors.white, fontSize: 18.sp, fontWeight: FontWeight.w700),
                   ),
                 ),
-
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                   decoration: BoxDecoration(color: _statusColor(status), borderRadius: BorderRadius.circular(20)),
@@ -106,10 +152,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               ],
             ),
           ),
-
           SizedBox(height: 2.h),
-
-
           Container(
             width: double.infinity,
             constraints: BoxConstraints(minHeight: 38.h),
@@ -139,11 +182,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               ],
             ),
           ),
-
-
           SizedBox(height: 2.h),
-
-
           Row(crossAxisAlignment: CrossAxisAlignment.start, children: [
             Expanded(
               child: _infoTile(
@@ -161,10 +200,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               ),
             ),
           ]),
-
           SizedBox(height: 2.h),
-
-
           Row(children: [
             Column(crossAxisAlignment: CrossAxisAlignment.start, children: [
               Text("Status", style: TextStyle(color: Colors.white54, fontSize: 14.sp)),
@@ -176,13 +212,10 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               ),
             ]),
             const Spacer(),
-
             _buildQuickActionButton(svc, status),
-
             const SizedBox(width: 10),
             _buildDeleteButton(context, svc),
           ]),
-
           SizedBox(height: 3.h),
         ]),
       ),
@@ -212,11 +245,9 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     return ElevatedButton.icon(
       onPressed: () async {
         final prevStatus = task['status'];
-
         setState(() => task['status'] = newStatus);
-
         try {
-          final ok = await svc.updateTask(id.toString(), {'status': newStatus});
+          final ok = await svc.updateTask(_extractId(task), {'status': newStatus});
           if (ok == true) {
             await context.read<TaskService>().fetchTasks();
           } else {
@@ -260,8 +291,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
 
   // confirmation & delete
   Future<void> _confirmAndDelete(BuildContext context, TaskService svc) async {
-    final id = task['_id'] ?? task['id'] ?? task['taskId'];
-    if (id == null) return;
+    final id = _extractId(task);
+    if (id.isEmpty) return;
 
     final ok = await showDialog<bool>(
       context: context,
@@ -285,7 +316,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     try {
       final loader = ScaffoldMessenger.of(context);
       loader.showSnackBar(const SnackBar(content: Text("Deleting...")));
-      final success = await svc.deleteTask(id.toString());
+      final success = await svc.deleteTask(id);
       loader.hideCurrentSnackBar();
       if (success == true) {
         await context.read<TaskService>().fetchTasks();
@@ -342,26 +373,35 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
     return s[0].toUpperCase() + s.substring(1);
   }
 
-
+  /// OPEN EDIT SHEET (stable)
   void _openEditSheet(BuildContext context, TaskService svc, Map originalTask) {
+    // local copies / controllers
     final titleC = TextEditingController(text: (originalTask['title'] ?? '').toString());
     final descC = TextEditingController(text: (originalTask['description'] ?? '').toString());
 
     DateTime startDate;
     DateTime endDate;
     try {
-      startDate = originalTask['startDate'] != null ? DateTime.parse(originalTask['startDate']) : DateTime.now();
+      startDate = originalTask['startDate'] != null ? DateTime.parse(originalTask['startDate'].toString()) : DateTime.now();
     } catch (_) {
       startDate = DateTime.now();
     }
     try {
-      endDate = originalTask['endDate'] != null ? DateTime.parse(originalTask['endDate']) : startDate.add(const Duration(days: 1));
+      endDate = originalTask['endDate'] != null ? DateTime.parse(originalTask['endDate'].toString()) : startDate.add(const Duration(days: 1));
     } catch (_) {
       endDate = startDate.add(const Duration(days: 1));
     }
 
-
     String status = (originalTask['status'] ?? 'not started').toString();
+
+    // helper that we may reference inside the sheet (declare BEFORE usage)
+    String originalTaskStatus(Map t) {
+      try {
+        return (t['status'] ?? 'not started').toString();
+      } catch (_) {
+        return 'not started';
+      }
+    }
 
     bool loading = false;
     bool showStatusToast = false;
@@ -421,7 +461,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
               suffixIcon: suffix,
             );
           }
-
 
           Widget statusSegment(String value, IconData iconData) {
             final bool active = value == status;
@@ -494,7 +533,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       Text("Edit Task", style: TextStyle(color: Colors.white, fontSize: 16.sp, fontWeight: FontWeight.bold)),
                       TextButton(
                         onPressed: () {
-
                           toastTimer?.cancel();
                           Navigator.pop(ctx2);
                         },
@@ -530,8 +568,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       ),
                     ]),
                     const SizedBox(height: 12),
-
-
                     Align(alignment: Alignment.centerLeft, child: Text("Status", style: TextStyle(color: Colors.white70, fontSize: 14.sp))),
                     const SizedBox(height: 8),
                     Row(
@@ -543,7 +579,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                         statusSegment('completed', Icons.check),
                       ],
                     ),
-
                     AnimatedSwitcher(
                       duration: const Duration(milliseconds: 220),
                       child: showStatusToast
@@ -568,9 +603,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                             const SizedBox(width: 12),
                             GestureDetector(
                               onTap: () {
-
                                 setStateDialog(() {
-                                  status = (originalTask['status'] ?? 'not started').toString();
+                                  status = originalTaskStatus(originalTask);
                                   showStatusToast = false;
                                 });
                                 toastTimer?.cancel();
@@ -582,7 +616,6 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                       )
                           : const SizedBox(height: 0),
                     ),
-
                     const SizedBox(height: 16),
                     SizedBox(
                       width: double.infinity,
@@ -596,8 +629,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                           }
                           setStateDialog(() => loading = true);
                           try {
-                            final id = (originalTask['_id'] ?? originalTask['id'] ?? originalTask['taskId'])?.toString();
-                            if (id == null) throw Exception("Missing id");
+                            final id = _extractId(originalTask);
+                            if (id.isEmpty) throw Exception("Missing id");
                             final updates = <String, dynamic>{
                               'title': titleC.text.trim(),
                               'description': descC.text.trim(),
@@ -605,7 +638,7 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
                               'endDate': endDate.toIso8601String(),
                               'status': status,
                             };
-                            final ok = await svc.updateTask(id.toString(), updates);
+                            final ok = await svc.updateTask(id, updates);
                             if (ok == true) {
                               setState(() {
                                 task['title'] = updates['title'];
@@ -640,7 +673,8 @@ class _TaskDetailScreenState extends State<TaskDetailScreen> {
         });
       },
     ).whenComplete(() {
-
+      // cleanup timers if any still running
+      // (toastTimer already cancelled when dialog closed via Close/Save)
     });
   }
 }

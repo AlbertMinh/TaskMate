@@ -3,13 +3,15 @@ import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+
 import '../config.dart';
 import 'auth_service.dart';
 
 class NoteService extends ChangeNotifier {
-  final String baseUrl = AppConfig.baseUrl; // e.g. https://taskapi-1-zwcj.onrender.com
+  final String baseUrl = AppConfig.baseUrl;
+
   AuthService? _auth;
-  List<Map<String, dynamic>> notes = [];
+  List<dynamic> notes = [];
   bool loading = false;
   String search = '';
   bool onlyPinned = false;
@@ -24,156 +26,197 @@ class NoteService extends ChangeNotifier {
     }
   }
 
-  Future<String?> _token() async {
+  Future<String?> _getValidAccessToken() async {
     if (_auth == null) return null;
-    return await _auth!.ensureAccessToken();
-  }
-
-  Uri _uri([String path = '']) => Uri.parse("$baseUrl/notes$path");
-
-  void setSearch(String s) {
-    search = s;
-    notifyListeners();
-    // optional: debounce / search server side. For now filter client side.
-  }
-
-  void togglePinnedFilter() {
-    onlyPinned = !onlyPinned;
-    notifyListeners();
+    try {
+      final token = await _auth!.ensureAccessToken();
+      return token;
+    } catch (e) {
+      debugPrint('[NoteService] _getValidAccessToken error: $e');
+      return null;
+    }
   }
 
   Future<void> fetchNotes() async {
-    loading = true;
-    notifyListeners();
-    final token = await _token();
-    if (token == null) {
-      loading = false;
-      notifyListeners();
-      return;
-    }
-
+    final token = await _auth?.ensureAccessToken();
+    if (token == null) return;
     try {
-      final res = await http.get(_uri(), headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      }).timeout(const Duration(seconds: 10));
-
+      loading = true;
+      notifyListeners();
+      final res = await http.get(Uri.parse('$baseUrl/notes'),
+        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
+      ).timeout(const Duration(seconds: 10));
       if (res.statusCode == 200) {
         final data = jsonDecode(res.body);
-        if (data is List) {
-          notes = List<Map<String, dynamic>>.from(data.map((e) => Map<String, dynamic>.from(e)));
-        } else {
-          notes = [];
-        }
-      } else if (res.statusCode == 401) {
-        // try refresh once via ensureAccessToken in _token()
-        final newToken = await _token();
-        if (newToken != null && newToken != token) {
-          await fetchNotes();
-        } else {
-          // unauthorized
-        }
-      } else {
-        if (kDebugMode) debugPrint('[NoteService] fetchNotes status=${res.statusCode} body=${res.body}');
+        if (data is List) notes = data;
       }
     } catch (e) {
-      if (kDebugMode) debugPrint('[NoteService] fetchNotes error: $e');
+      debugPrint('[NoteService] fetchNotes error: $e');
     } finally {
       loading = false;
       notifyListeners();
     }
   }
 
-  Future<bool> createNote({required String title, required String content, bool pinned = false, List<String>? tags}) async {
-    final token = await _token();
+  Future<bool> createNote({required String title, String? content, bool pinned = false, List<String>? tags}) async {
+    final token = await _auth?.ensureAccessToken();
     if (token == null) return false;
-    final payload = {
-      'title': title,
-      'content': content,
-      'pinned': pinned,
-      'tags': tags ?? [],
-    };
-
     try {
-      final res = await http.post(_uri(),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode(payload)).timeout(const Duration(seconds: 10));
+      final res = await http.post(Uri.parse('$baseUrl/notes'),
+        headers: {'Authorization': 'Bearer $token', 'Content-Type': 'application/json'},
+        body: jsonEncode({'title': title, 'content': content ?? '', 'pinned': pinned, 'tags': tags ?? []}),
+      ).timeout(const Duration(seconds: 10));
 
       if (res.statusCode == 201 || res.statusCode == 200) {
+        // optionally parse and push locally
         await fetchNotes();
         return true;
-      } else {
-        if (kDebugMode) debugPrint('[NoteService] createNote failed: ${res.statusCode} ${res.body}');
-        return false;
       }
+      debugPrint('[NoteService] createNote failed status=${res.statusCode} body=${res.body}');
+      return false;
     } catch (e) {
-      if (kDebugMode) debugPrint('[NoteService] createNote error: $e');
+      debugPrint('[NoteService] createNote error: $e');
       return false;
     }
   }
 
   Future<bool> updateNote(String id, Map<String, dynamic> updates) async {
-    final token = await _token();
+    final token = await _getValidAccessToken();
     if (token == null) return false;
     try {
-      final res = await http.put(_uri('/$id'),
-          headers: {
-            'Authorization': 'Bearer $token',
-            'Content-Type': 'application/json',
-          },
-          body: jsonEncode(updates)).timeout(const Duration(seconds: 10));
+      final res = await http
+          .put(Uri.parse("$baseUrl/notes/$id"),
+          headers: {"Authorization": "Bearer $token", "Content-Type": "application/json"},
+          body: jsonEncode(updates))
+          .timeout(const Duration(seconds: 10));
 
       if (res.statusCode == 200) {
         await fetchNotes();
         return true;
-      } else {
-        if (kDebugMode) debugPrint('[NoteService] updateNote failed: ${res.statusCode} ${res.body}');
-        return false;
       }
+      debugPrint('[NoteService] updateNote failed status=${res.statusCode} body=${res.body}');
+      return false;
     } catch (e) {
-      if (kDebugMode) debugPrint('[NoteService] updateNote error: $e');
+      debugPrint('[NoteService] updateNote error: $e');
       return false;
     }
   }
 
   Future<bool> deleteNote(String id) async {
-    final token = await _token();
+    final token = await _getValidAccessToken();
     if (token == null) return false;
     try {
-      final res = await http.delete(_uri('/$id'), headers: {
-        'Authorization': 'Bearer $token',
-        'Content-Type': 'application/json',
-      }).timeout(const Duration(seconds: 10));
+      final res = await http
+          .delete(Uri.parse("$baseUrl/notes/$id"),
+          headers: {"Authorization": "Bearer $token", "Content-Type": "application/json"})
+          .timeout(const Duration(seconds: 10));
 
       if (res.statusCode == 200) {
-        notes.removeWhere((n) => n['_id'] == id || n['id'] == id);
-        notifyListeners();
+        await fetchNotes();
         return true;
-      } else {
-        if (kDebugMode) debugPrint('[NoteService] deleteNote failed: ${res.statusCode} ${res.body}');
-        return false;
       }
+      debugPrint('[NoteService] deleteNote failed status=${res.statusCode} body=${res.body}');
+      return false;
     } catch (e) {
-      if (kDebugMode) debugPrint('[NoteService] deleteNote error: $e');
+      debugPrint('[NoteService] deleteNote error: $e');
       return false;
     }
   }
 
-  // Client-side filtered list (search + pinned)
-  List<Map<String, dynamic>> get filtered {
-    var list = List<Map<String, dynamic>>.from(notes);
+  // collaborators for notes
+
+  Future<bool> shareNote(String noteId, {String? userId, String? email, required String role}) async {
+    final token = await _getValidAccessToken();
+    if (token == null) return false;
+
+    final payload = <String, dynamic>{'role': role};
+    if (userId != null) payload['userId'] = userId;
+    if (email != null) payload['email'] = email;
+
+    try {
+      final res = await http
+          .post(Uri.parse("$baseUrl/notes/$noteId/share"),
+          headers: {"Authorization": "Bearer $token", "Content-Type": "application/json"},
+          body: jsonEncode(payload))
+          .timeout(const Duration(seconds: 10));
+
+      if (res.statusCode == 200) {
+        await fetchNotes();
+        return true;
+      }
+      debugPrint('[NoteService] shareNote failed status=${res.statusCode} body=${res.body}');
+      return false;
+    } catch (e) {
+      debugPrint('[NoteService] shareNote error: $e');
+      return false;
+    }
+  }
+
+  Future<List<dynamic>> listCollaborators(String noteId) async {
+    final token = await _getValidAccessToken();
+    if (token == null) return [];
+    try {
+      final res = await http
+          .get(Uri.parse("$baseUrl/notes/$noteId/collaborators"),
+          headers: {"Authorization": "Bearer $token", "Content-Type": "application/json"})
+          .timeout(const Duration(seconds: 8));
+
+      if (res.statusCode == 200) {
+        final data = jsonDecode(res.body);
+        if (data is List) return data;
+      }
+      debugPrint('[NoteService] listCollaborators failed status=${res.statusCode} body=${res.body}');
+      return [];
+    } catch (e) {
+      debugPrint('[NoteService] listCollaborators error: $e');
+      return [];
+    }
+  }
+
+  Future<bool> removeCollaborator(String noteId, String collabId) async {
+    final token = await _getValidAccessToken();
+    if (token == null) return false;
+    try {
+      final res = await http
+          .delete(Uri.parse("$baseUrl/notes/$noteId/collaborators/$collabId"),
+          headers: {"Authorization": "Bearer $token", "Content-Type": "application/json"})
+          .timeout(const Duration(seconds: 8));
+
+      if (res.statusCode == 200) {
+        await fetchNotes();
+        return true;
+      }
+      debugPrint('[NoteService] removeCollaborator failed status=${res.statusCode} body=${res.body}');
+      return false;
+    } catch (e) {
+      debugPrint('[NoteService] removeCollaborator error: $e');
+      return false;
+    }
+  }
+
+  // helpers
+  void setSearch(String q) {
+    search = q;
+    notifyListeners();
+  }
+
+  List<dynamic> get filtered {
+    var list = notes;
     if (onlyPinned) list = list.where((n) => n['pinned'] == true).toList();
     if (search.isNotEmpty) {
       final q = search.toLowerCase();
       list = list.where((n) {
         final t = (n['title'] ?? '').toString().toLowerCase();
         final c = (n['content'] ?? '').toString().toLowerCase();
-        return t.contains(q) || c.contains(q) || (n['tags'] ?? []).join(' ').toLowerCase().contains(q);
+        final tagsL = (n['tags'] ?? []).map((e) => e.toString().toLowerCase()).toList();
+        return t.contains(q) || c.contains(q) || tagsL.any((tag) => tag.contains(q));
       }).toList();
     }
     return list;
+  }
+
+  void togglePinnedFilter() {
+    onlyPinned = !onlyPinned;
+    notifyListeners();
   }
 }

@@ -1,7 +1,7 @@
 class AppConfig {
 
 
-  static const prodBaseUrl = "https://taskapi-1-zwcj.onrender.com";
+  static const prodBaseUrl = "https://taskmateapi.onrender.com";
 
   static const baseUrl = prodBaseUrl;
 }

@@ -52,20 +52,25 @@ class _RegisterScreenState extends State<RegisterScreen> {
   String _classifyErrorMessage(String raw) {
     final m = raw.toLowerCase();
 
-    if (m.contains("username") && (m.contains("exists") || m.contains("already") || m.contains("in use")))
+    if (m.contains("username") && (m.contains("exists") || m.contains("already") || m.contains("in use"))) {
       return "Username already taken";
+    }
 
-    if (m.contains("email") && (m.contains("exists") || m.contains("already") || m.contains("in use")))
+    if (m.contains("email") && (m.contains("exists") || m.contains("already") || m.contains("in use"))) {
       return "Email already registered";
+    }
 
-    if (m.contains("weak"))
+    if (m.contains("weak")) {
       return "Password is too weak — try a stronger one";
+    }
 
-    if (m.contains("invalid-email") || m.contains("invalid") && m.contains("email"))
+    if (m.contains("invalid-email") || m.contains("invalid") && m.contains("email")) {
       return "Invalid email format";
+    }
 
-    if (m.contains("password") && m.contains("at least"))
+    if (m.contains("password") && m.contains("at least")) {
       return "Password must be at least $PASSWORD_MIN characters";
+    }
 
     return "Registration failed — please try again";
   }
